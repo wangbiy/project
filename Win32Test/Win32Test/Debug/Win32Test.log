@@ -1,0 +1,15 @@
+﻿生成启动时间为 2019/12/4 14:33:28。
+     1>项目“E:\碧瑶的代码\C-3\Win32Test\Win32Test\Win32Test.vcxproj”在节点 2 上(Build 个目标)。
+     1>ClCompile:
+         D:\新建文件夹 (3)\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _WINDOWS /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt Win32Test.cpp
+         Win32Test.cpp
+     1>e:\碧瑶的代码\c-3\win32test\win32test\win32test.cpp(92): warning C4715: “WinProc”: 不是所有的控件路径都返回值
+       Link:
+         D:\新建文件夹 (3)\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"E:\碧瑶的代码\C-3\Win32Test\Debug\Win32Test.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"E:\碧瑶的代码\C-3\Win32Test\Debug\Win32Test.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"E:\碧瑶的代码\C-3\Win32Test\Debug\Win32Test.lib" /MACHINE:X86 Debug\Win32Test.res
+         Debug\Win32Test.obj
+         Win32Test.vcxproj -> E:\碧瑶的代码\C-3\Win32Test\Debug\Win32Test.exe
+     1>已完成生成项目“E:\碧瑶的代码\C-3\Win32Test\Win32Test\Win32Test.vcxproj”(Build 个目标)的操作。
+
+生成成功。
+
+已用时间 00:00:02.92
