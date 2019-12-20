@@ -118,8 +118,10 @@ protected:
 			}
 			else if (strName == _T("btn_min"))//如果是最小化按钮
 			{
-				MessageBox(NULL, _T("最小化"), _T("测试"), IDOK);			
+				MessageBox(NULL, _T("最小化"), _T("测试"), IDOK);
 			}
+			else if (strName == _T("btn_load"))
+				LoadFile();
 			else if (strName == _T("btn_cut"))//截取视频
 			{
 				Cutview();
@@ -150,7 +152,7 @@ protected:
 			}
 			else if (strName == _T("btn_bron"))//烧录
 			{
-				BornSRT2View();
+				BornSRTtoView();
 			}
 			else if (strName == _T("btn_generate"))//生成gif
 			{
@@ -165,7 +167,12 @@ protected:
 					GenerateGifWithView();//使用视频生成
 				}
 			}
-		}		
+		}
+		//在窗口初始化期间，由于默认的是图片生成，我们需要让视频生成的相关控件无效
+		else if (msg.sType == _T("windowinit"))
+		{
+			SetControlEnable(false);
+		}
 		else if (msg.sType == _T("itemselect"))//如果下拉框Combo是选择改变了
 		{
 			if (strName == _T("List_srt"))//表示选择改变，将改变后的内容放在右侧的edit中即可
@@ -175,36 +182,34 @@ protected:
 				//拿出list中某一项的内容
 				CListTextElementUI* pListItem = (CListTextElementUI*)pList->GetItemAt(pList->GetCurSel());
 				//将list选中行中的对应文本信息增加到edit中
-				CEditUI* pEdit = (CEditUI*)m_PaintManager.FindControl(_T("edit_path"));
+				CEditUI* pEdit = (CEditUI*)m_PaintManager.FindControl(_T("edit_word"));
 				pEdit->SetText(pListItem->GetText(1));//获取第一项,并且设置进edit框中
 			}
 			if (strName == _T("combo_select"))
-			{
-				
+			{		
 				CComboBoxUI* pComboUI = (CComboBoxUI*)m_PaintManager.FindControl(_T("combo_select"));
 				if (0 == pComboUI->GetCurSel())
 				{
 					//选择图片方式生成，让以下控件无效
-					((CEditUI*)m_PaintManager.FindControl(_T("edit_start")))->SetEnabled(false);//将start编辑框设为无效
-					((CEditUI*)m_PaintManager.FindControl(_T("edit_end")))->SetEnabled(false);//将end编辑框设为无效
-					((CButtonUI*)m_PaintManager.FindControl(_T("btn_cut")))->SetEnabled(false);//将截取按钮设为无效
-					((CButtonUI*)m_PaintManager.FindControl(_T("btn_get_srt")))->SetEnabled(false);//将提取SRT按钮设为无效
-					((CButtonUI*)m_PaintManager.FindControl(_T("btn_write_srt")))->SetEnabled(false);//将写入SRT按钮设为无效
-					((CButtonUI*)m_PaintManager.FindControl(_T("btn_view")))->SetEnabled(false);//将提取视频按钮设为无效
-					((CButtonUI*)m_PaintManager.FindControl(_T("btn_bron")))->SetEnabled(false);//将烧录按钮设为无效
+					SetControlEnable(false);
 				}
 				else//选择视频方式生成，让以下控件有效
 				{
-					((CEditUI*)m_PaintManager.FindControl(_T("edit_start")))->SetEnabled(true);//将start编辑框设为有效
-					((CEditUI*)m_PaintManager.FindControl(_T("edit_end")))->SetEnabled(true);//将end编辑框设为有效
-					((CButtonUI*)m_PaintManager.FindControl(_T("btn_cut")))->SetEnabled(true);//将截取按钮设为有效
-					((CButtonUI*)m_PaintManager.FindControl(_T("btn_get_srt")))->SetEnabled(true);//将提取SRT按钮设为有效
-					((CButtonUI*)m_PaintManager.FindControl(_T("btn_write_srt")))->SetEnabled(true);//将写入SRT按钮设为有效
-					((CButtonUI*)m_PaintManager.FindControl(_T("btn_view")))->SetEnabled(true);//将提取视频按钮设为有效
-					((CButtonUI*)m_PaintManager.FindControl(_T("btn_bron")))->SetEnabled(true);//将烧录按钮设为有效
+					SetControlEnable(true);
 				}
 			}
 		}
+	}
+	void SetControlEnable(bool IsValid)//将一些控件设置为有效或者无效
+	{
+		((CEditUI*)m_PaintManager.FindControl(_T("edit_start")))->SetEnabled(IsValid);//start编辑框设置
+		((CEditUI*)m_PaintManager.FindControl(_T("edit_end")))->SetEnabled(IsValid);//end编辑框设置
+		((CButtonUI*)m_PaintManager.FindControl(_T("btn_cut")))->SetEnabled(IsValid);//截取按钮设置
+		((CButtonUI*)m_PaintManager.FindControl(_T("btn_get_srt")))->SetEnabled(IsValid);//提取SRT按钮设置
+		((CButtonUI*)m_PaintManager.FindControl(_T("btn_write_srt")))->SetEnabled(IsValid);//写入SRT按钮设置
+		((CButtonUI*)m_PaintManager.FindControl(_T("btn_view")))->SetEnabled(IsValid);//提取视频按钮设置
+		((CButtonUI*)m_PaintManager.FindControl(_T("btn_bron")))->SetEnabled(IsValid);//烧录按钮设置
+
 	}
 	void SendMessage(CDuiString strCMD)//向控制台发命令
 	{
@@ -253,23 +258,40 @@ protected:
 	{
 		CDuiString strPath = CPaintManagerUI::GetInstancePath();//获取路径
 		strPath += _T("ffmpeg\\");
+		//此时我们有两种方法，因为加载按钮响应后，我们可以从加载编辑框中获取路径
+		CDuiString strViewPath = ((CEditUI*)m_PaintManager.FindControl(_T("edit_path")))->GetText();//获取到编辑框中内容的路径，也就是拿到了视频的完整路径
 		//1.构造命令
 		CDuiString strCMD;
 		strCMD += _T("/c ");//构造命令期间第一条必须是'/c'
 		strCMD += strPath;
 		strCMD += _T("ffmpeg -i ");//要加上\c参数
-		strCMD += strPath;
-		strCMD += _T("input.mkv ");//视频文件的路径
+		//优先通过界面中编辑框来加载视频路径
+		if (!strViewPath.IsEmpty())
+		{
+			strCMD += strViewPath;
+		}
+		else//再到默认路径下获取文件
+		{
+			strCMD += strPath;
+			strCMD += _T("input.mkv ");//视频文件的路径
+		}	
 		strCMD += _T("-vcodec copy -acodec copy ");
 		strCMD += _T("-ss "); 
 
 		//获取起始时间和结尾时间
 		CDuiString strStartTime=((CEditUI*)m_PaintManager.FindControl(_T("edit_start")))->GetText();
-		CDuiString strEndtime=((CEditUI*)m_PaintManager.FindControl(_T("edit_end")))->GetText();
-
+		if (!IsValidTime(strStartTime))
+		{
+			MessageBox(NULL, _T("起始时间有误"), _T("MakeGif"), IDOK);
+		}
+		CDuiString strEndTime=((CEditUI*)m_PaintManager.FindControl(_T("edit_end")))->GetText();
+		if (!IsValidTime(strEndTime))
+		{
+			MessageBox(NULL, _T("终止时间有误"), _T("MakeGif"), IDOK);
+		}
 		strCMD += strStartTime;
 		strCMD += _T(" -to ");
-		strCMD += strEndtime;
+		strCMD += strEndTime;
 		strCMD += _T(" ");
 
 		//输出文件的路径
@@ -278,6 +300,24 @@ protected:
 
 		//2.向cmd发送命令
 		SendMessage(strCMD);
+	}
+	void LoadFile()//加载视频文件的路径
+	{
+		OPENFILENAME ofn;
+		memset(&ofn, 0, sizeof(OPENFILENAME));
+		//设置参数
+		TCHAR strPath[MAX_PATH] = { 0 };//MAX_PATH--->260
+		ofn.lStructSize = sizeof(OPENFILENAME);
+		ofn.lpstrFile = strPath;
+		ofn.nMaxFile = sizeof(strPath);
+		ofn.lpstrFilter = _T("All(*.*)\0 *.*\0mkv(*.mkv)\0 *.mkv\0");//使用这个过滤串，我们这里是过滤出mkv文件
+		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+		if (GetOpenFileName(&ofn))
+		{
+			//将文件的路径设置到edit
+			((CEditUI*)m_PaintManager.FindControl(_T("edit_path")))->SetText(strPath);//将路径设置进编辑框中
+		}
+
 	}
 	//(2)从截取的视频中提取字幕（必须是外挂字幕）
 	void GetSRTFile()
@@ -307,7 +347,6 @@ protected:
 		std::ifstream fIn(strPath.GetData());//获取字符串类型的文件
 
 		char strSRTCon[512] = { 0 };
-
 		CListUI* pList = (CListUI*)m_PaintManager.FindControl(_T("List_srt"));//控件都是通过绘画管理器画出来的，拿到list控件
 
 		//给list中添加每一行
@@ -399,7 +438,7 @@ protected:
 
 		SendMessage(strCMD);
 	}
-	void BornSRT2View()
+	void BornSRTtoView()
 	{
 		CDuiString strPath = CPaintManagerUI::GetInstancePath();//获取路径
 		strPath += _T("ffmpeg\\");
@@ -439,18 +478,36 @@ protected:
 		wchar_t* pContent = new wchar_t[szLen + 1];//为目标串申请空间，要存储\0
 
 		//第二次调用：进行真正的转化
-		::MultiByteToWideChar(CP_UTF8, 0, str, strlen(str),pContent, szLen);
+		::MultiByteToWideChar(CP_UTF8, NULL, str, strlen(str),pContent, szLen);
 		pContent[szLen] = '\0';
 		CDuiString s(pContent);
 		delete[]pContent;
 		return s;
+	}
+	bool IsValidTime(CDuiString strTime)//判断给的时间是否有效
+	{
+		//"00:40:07"---时间格式
+		if (strTime.GetLength() != 8)
+		{
+			return false;
+		}
+		for (int i = 0; i < strTime.GetLength(); ++i)
+		{
+			if (strTime[i] == ':')
+				continue;
+			if (!(strTime[i] >= '0' && strTime[i] <= '9'))//不是数字
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 	string UnicodeToANSI(CDuiString str)
 	{
 		int szLen = ::WideCharToMultiByte(CP_ACP, 0, str.GetData(), -1, NULL, 0, NULL, FALSE);
 		char* pBuff = new char[szLen + 1];
 
-		::WideCharToMultiByte(CP_ACP, 0, str.GetData(), -1, pBuff, szLen, NULL, FALSE);//一开始第四个参数理论上哪个应该是str.GetLength(),但是写出来是乱码的，改成-1就可以正常显示
+		::WideCharToMultiByte(CP_ACP, 0, str.GetData(), str.GetLength(), pBuff, szLen, NULL, FALSE);//一开始第四个参数理论上哪个应该是str.GetLength(),但是写出来是乱码的，改成-1就可以正常显示
 		pBuff[szLen] = '\0';
 		string s(pBuff);
 		delete[] pBuff;
