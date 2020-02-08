@@ -4,7 +4,7 @@ using namespace DuiLib;
 #include <fstream>
 #pragma comment(lib, "DuiLib_ud.lib")
 #if 0
-class CDuiFramWnd : public CWindowWnd,public INotifyUI
+class CDuiFramWnd : public CWindowWnd, public INotifyUI
 {
 public:
 	// CWindowWnd类的纯虚函数，在该函数中必须返回用户所定义窗口的类名称，注册窗口时需要用到
@@ -111,7 +111,7 @@ protected:
 	{
 		CDuiString strName = msg.pSender->GetName();//获取控件的名字
 		if (msg.sType == _T("click"))//如果是鼠标点击
-		{		
+		{
 			if (strName == _T("btn_close"))//如果是关闭按钮
 			{
 				Close();
@@ -134,13 +134,13 @@ protected:
 			else if (strName == _T("btn_commit"))//提交按钮
 			{
 				CEditUI* pEdit = (CEditUI*)m_PaintManager.FindControl(_T("edit_word"));
-				CDuiString strWord=pEdit->GetText();//获取这个edit对应的文本
+				CDuiString strWord = pEdit->GetText();//获取这个edit对应的文本
 
 				//将该文本写回到list中，此时已经在edit中编辑过了
 				CListUI* pList = (CListUI*)m_PaintManager.FindControl(_T("List_srt"));//先获取list控件
 				CListTextElementUI* pListItem = (CListTextElementUI*)pList->GetItemAt(pList->GetCurSel());//将当前list的这一行内容选中
 
-				pListItem->SetText(1,strWord);//下标为1
+				pListItem->SetText(1, strWord);//下标为1
 			}
 			else if (strName == _T("btn_write_srt"))//写入字幕
 			{
@@ -186,7 +186,7 @@ protected:
 				pEdit->SetText(pListItem->GetText(1));//获取第一项,并且设置进edit框中
 			}
 			if (strName == _T("combo_select"))
-			{		
+			{
 				CComboBoxUI* pComboUI = (CComboBoxUI*)m_PaintManager.FindControl(_T("combo_select"));
 				if (0 == pComboUI->GetCurSel())
 				{
@@ -228,7 +228,7 @@ protected:
 		//调用命令行窗口，给命令行发消息，
 		//在该函数中，会新创建一个进程，来负责调用命令行窗口执行命令
 		ShellExecuteEx(&strSEInfo);
-		
+
 		//等待命令响应完成
 		WaitForSingleObject(strSEInfo.hProcess, INFINITE);
 		MessageBox(NULL, _T("命令操作完成"), _T("MakeGif"), IDOK);
@@ -242,7 +242,7 @@ protected:
 		CDuiString strCMD;
 		strCMD += _T("/c ");//构造命令期间第一条必须是'/c'，要加上/c参数
 		strCMD += strPath;
-		strCMD+=_T("ffmpeg -r 3 -i ");
+		strCMD += _T("ffmpeg -r 3 -i ");
 		strCMD += strPath;
 		strCMD += _T(".\\Picture\\%d.jpg ");//这里是图片的路径，注意要进行转义字符的转义
 		strCMD += strPath;
@@ -274,17 +274,17 @@ protected:
 		{
 			strCMD += strPath;
 			strCMD += _T("input.mkv ");//视频文件的路径
-		}	
+		}
 		strCMD += _T("-vcodec copy -acodec copy ");
-		strCMD += _T("-ss "); 
+		strCMD += _T("-ss ");
 
 		//获取起始时间和结尾时间
-		CDuiString strStartTime=((CEditUI*)m_PaintManager.FindControl(_T("edit_start")))->GetText();
+		CDuiString strStartTime = ((CEditUI*)m_PaintManager.FindControl(_T("edit_start")))->GetText();
 		if (!IsValidTime(strStartTime))
 		{
 			MessageBox(NULL, _T("起始时间有误"), _T("MakeGif"), IDOK);
 		}
-		CDuiString strEndTime=((CEditUI*)m_PaintManager.FindControl(_T("edit_end")))->GetText();
+		CDuiString strEndTime = ((CEditUI*)m_PaintManager.FindControl(_T("edit_end")))->GetText();
 		if (!IsValidTime(strEndTime))
 		{
 			MessageBox(NULL, _T("终止时间有误"), _T("MakeGif"), IDOK);
@@ -354,14 +354,14 @@ protected:
 		while (!fIn.eof())//文件指针有没有在文件结尾
 		{
 			//读取字幕序号
-			fIn.getline(strSRTCon,512);
+			fIn.getline(strSRTCon, 512);
 
 			//给出list中的文本元素
 			CListTextElementUI* pListItem = new CListTextElementUI;
 			pList->Add(pListItem);
 
 			//读取时间轴
-			fIn.getline(strSRTCon,512);
+			fIn.getline(strSRTCon, 512);
 			pListItem->SetText(0, UTF8ToUniCode(strSRTCon));
 			//从0开始，将文本设置进去，但是此时strSRTCon是LPCTSTR类型的，
 			//win32项目是基于Unicode的，不是ASCII形式的，因此要进行转化（UTF-8--->Unicode)
@@ -403,7 +403,7 @@ protected:
 			string strNewLine = UnicodeToANSI(_T("\n"));
 			//写行号
 			string itemNo = UnicodeToANSI(strNo);//但是我们拿到的字符属于Unicode格式，而ofstream又是基于ASCII码的格式，所以需要转化
-			fOut.write(itemNo.c_str(),itemNo.size());
+			fOut.write(itemNo.c_str(), itemNo.size());
 			fOut.write(strNewLine.c_str(), strNewLine.size());//加一个换行
 			//写时间轴
 			string itemTime = UnicodeToANSI(strTime);
@@ -417,6 +417,7 @@ protected:
 
 			//最后再加一个换行
 			fOut.write(strNewLine.c_str(), strNewLine.size());//加一个换行
+			
 		}
 		fOut.close();
 	}
@@ -473,12 +474,12 @@ protected:
 	CDuiString UTF8ToUniCode(const char* str)//UTF-8--->Unicode 
 	{
 		//第一次调用：获取转化之后的目标串的长度
-		int szLen=::MultiByteToWideChar(CP_UTF8, 0, str, strlen(str), NULL, 0);
+		int szLen = ::MultiByteToWideChar(CP_UTF8, 0, str, strlen(str), NULL, 0);
 
 		wchar_t* pContent = new wchar_t[szLen + 1];//为目标串申请空间，要存储\0
 
 		//第二次调用：进行真正的转化
-		::MultiByteToWideChar(CP_UTF8, NULL, str, strlen(str),pContent, szLen);
+		::MultiByteToWideChar(CP_UTF8, NULL, str, strlen(str), pContent, szLen);
 		pContent[szLen] = '\0';
 		CDuiString s(pContent);
 		delete[]pContent;
