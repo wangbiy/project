@@ -121,7 +121,9 @@ protected:
 				MessageBox(NULL, _T("最小化"), _T("测试"), IDOK);
 			}
 			else if (strName == _T("btn_load"))
+			{
 				LoadFile();
+			}
 			else if (strName == _T("btn_cut"))//截取视频
 			{
 				Cutview();
@@ -209,9 +211,8 @@ protected:
 		((CButtonUI*)m_PaintManager.FindControl(_T("btn_write_srt")))->SetEnabled(IsValid);//写入SRT按钮设置
 		((CButtonUI*)m_PaintManager.FindControl(_T("btn_view")))->SetEnabled(IsValid);//提取视频按钮设置
 		((CButtonUI*)m_PaintManager.FindControl(_T("btn_bron")))->SetEnabled(IsValid);//烧录按钮设置
-
 	}
-	void SendMessage(CDuiString strCMD)//向控制台发命令
+	void SendMessage(const CDuiString& strCMD)//向控制台发命令
 	{
 		//1.初始化结构体
 		SHELLEXECUTEINFO strSEInfo;
@@ -231,7 +232,7 @@ protected:
 
 		//等待命令响应完成
 		WaitForSingleObject(strSEInfo.hProcess, INFINITE);
-		MessageBox(NULL, _T("命令操作完成"), _T("MakeGif"), IDOK);
+		MessageBox(m_hWnd, _T("命令操作完成"), _T("MakeGif"), IDOK);
 	}
 	//1、使用图片生成gif动态图
 	void GenerateGifWithPic()
@@ -317,7 +318,6 @@ protected:
 			//将文件的路径设置到edit
 			((CEditUI*)m_PaintManager.FindControl(_T("edit_path")))->SetText(strPath);//将路径设置进编辑框中
 		}
-
 	}
 	//(2)从截取的视频中提取字幕（必须是外挂字幕）
 	void GetSRTFile()
@@ -377,48 +377,51 @@ protected:
 	}
 	void WriteSRT()
 	{
-		//拿到srt文件的路径
+		// 获取SRT文件的路径
 		CDuiString strPath = CPaintManagerUI::GetInstancePath();
 		strPath += _T("ffmpeg\\input.srt");
 		std::ofstream fOut(strPath.GetData());//写到fout中
 
-		//1.从list控件中获取文本内容
+		// 1. 从List控件中获取文本内容
 		CListUI* pList = (CListUI*)m_PaintManager.FindControl(_T("List_srt"));
 		int szCount = pList->GetCount();//得到总共的行
+
 		for (int i = 0; i < szCount; ++i)
 		{
 			CListTextElementUI* pListItem = (CListTextElementUI*)pList->GetItemAt(i);
 
-			//序号
+			// 序号
 			CDuiString strNo;
 			strNo.Format(_T("%d"), i + 1);//因为srt文件标号是从1开始的，而i是从0开始的，所以要+1
-			//时间轴
-			CDuiString strTime = pListItem->GetText(0);
-			//文本内容
 
+			// 时间轴
+			CDuiString strTime = pListItem->GetText(0);
+
+			// 文本内容
 			CDuiString strWord = pListItem->GetText(1);
 
-			//2.将获取到的内容写回到srt文件中
+			// 2. 将获取到的内容写会到srt文件中
+			string strNewLine = Unicode2UTF8(_T("\n"));
 
-			string strNewLine = UnicodeToANSI(_T("\n"));
-			//写行号
-			string itemNo = UnicodeToANSI(strNo);//但是我们拿到的字符属于Unicode格式，而ofstream又是基于ASCII码的格式，所以需要转化
+			// 写行号
+			string itemNo = Unicode2UTF8(strNo);
 			fOut.write(itemNo.c_str(), itemNo.size());
-			fOut.write(strNewLine.c_str(), strNewLine.size());//加一个换行
-			//写时间轴
-			string itemTime = UnicodeToANSI(strTime);
+			fOut.write(strNewLine.c_str(), strNewLine.size());
+
+			// 写时间轴
+			string itemTime = Unicode2UTF8(strTime);
 			fOut.write(itemTime.c_str(), itemTime.size());
-			fOut.write(strNewLine.c_str(), strNewLine.size());//加一个换行
+			fOut.write(strNewLine.c_str(), strNewLine.size());
 
-			//写文本
-			string itemWord = UnicodeToANSI(strWord);
+			// 写文本
+			string itemWord = Unicode2UTF8(strWord);
 			fOut.write(itemWord.c_str(), itemWord.size());
-			fOut.write(strNewLine.c_str(), strNewLine.size());//加一个换行
+			fOut.write(strNewLine.c_str(), strNewLine.size());
 
-			//最后再加一个换行
-			fOut.write(strNewLine.c_str(), strNewLine.size());//加一个换行
-			
+			// 字幕和字幕之间都有个换行 
+			fOut.write(strNewLine.c_str(), strNewLine.size());
 		}
+
 		fOut.close();
 	}
 
@@ -441,18 +444,14 @@ protected:
 	}
 	void BornSRTtoView()
 	{
-		CDuiString strPath = CPaintManagerUI::GetInstancePath();//获取路径
-		strPath += _T("ffmpeg\\");
-		//1.构造命令
+		//ffmpeg -i 22.mkv -vf subtitles=input.srt 33.mkv -y
 		CDuiString strCMD;
 		strCMD += _T("/c ");//构造命令期间第一条必须是'/c'
-		strCMD += strPath;
-		strCMD += _T("ffmpeg -i ");//要加上\c参数
-		strCMD += strPath;
-		strCMD += _T("22.mkv -vf subtitles=input.srt ");
-		strCMD += strPath;
-		strCMD += _T("33.mkv -y");
-
+		strCMD += _T("cd ");
+		strCMD += CPaintManagerUI::GetInstancePath() + _T("ffmpeg");//获取路径
+		strCMD += _T(" & ");
+		//构造命令
+		strCMD += _T("ffmpeg -i 22.mkv -vf subtitles=input.srt 33.mkv -y");
 		SendMessage(strCMD);
 	}
 	void GenerateGifWithView()
@@ -503,15 +502,14 @@ protected:
 		}
 		return true;
 	}
-	string UnicodeToANSI(CDuiString str)
+	string Unicode2UTF8(CDuiString str)
 	{
-		int szLen = ::WideCharToMultiByte(CP_ACP, 0, str.GetData(), -1, NULL, 0, NULL, FALSE);
-		char* pBuff = new char[szLen + 1];
+		int len = WideCharToMultiByte(CP_UTF8, 0, str.GetData(), -1, NULL, 0, NULL, NULL);
+		CHAR *szUtf8 = new CHAR[len + 1]{0};
 
-		::WideCharToMultiByte(CP_ACP, 0, str.GetData(), str.GetLength(), pBuff, szLen, NULL, FALSE);//一开始第四个参数理论上哪个应该是str.GetLength(),但是写出来是乱码的，改成-1就可以正常显示
-		pBuff[szLen] = '\0';
-		string s(pBuff);
-		delete[] pBuff;
+		::WideCharToMultiByte(CP_UTF8, 0, str.GetData(), -1, (LPSTR)szUtf8, len, NULL, NULL);
+		string s(szUtf8);
+		delete[] szUtf8;
 		return s;
 	}
 };
@@ -534,4 +532,3 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 	framWnd.ShowModal();
 	return 0;
 }
-
