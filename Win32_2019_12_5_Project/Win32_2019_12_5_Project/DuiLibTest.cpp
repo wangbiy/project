@@ -118,7 +118,8 @@ protected:
 			}
 			else if (strName == _T("btn_min"))//如果是最小化按钮
 			{
-				MessageBox(NULL, _T("最小化"), _T("测试"), IDOK);
+				//发送最小化消息
+				SendMessage(WM_SYSCOMMAND, SC_MINIMIZE, 0);
 			}
 			else if (strName == _T("btn_load"))
 			{
@@ -212,7 +213,7 @@ protected:
 		((CButtonUI*)m_PaintManager.FindControl(_T("btn_view")))->SetEnabled(IsValid);//提取视频按钮设置
 		((CButtonUI*)m_PaintManager.FindControl(_T("btn_bron")))->SetEnabled(IsValid);//烧录按钮设置
 	}
-	void SendMessage(const CDuiString& strCMD)//向控制台发命令
+	void SendCmd(const CDuiString& strCMD)//向控制台发命令
 	{
 		//1.初始化结构体
 		SHELLEXECUTEINFO strSEInfo;
@@ -250,7 +251,7 @@ protected:
 		strCMD += _T("output.gif -y");//生成动态图，-y表示如果该目录下存在output.gif，就覆盖
 
 		//2.给cmd发命令
-		SendMessage(strCMD);
+		SendCmd(strCMD);
 	}
 
 	//2、使用视频生成gif动态图
@@ -300,7 +301,7 @@ protected:
 		strCMD += _T("11.mkv -y");
 
 		//2.向cmd发送命令
-		SendMessage(strCMD);
+		SendCmd(strCMD);
 	}
 	void LoadFile()//加载视频文件的路径
 	{
@@ -335,7 +336,7 @@ protected:
 		strCMD += _T("input.srt -y");//输出的字幕文件
 
 		//2.向cmd发送命令
-		SendMessage(strCMD);
+		SendCmd(strCMD);
 	}
 
 	//(3)编辑字幕，在窗口中编辑
@@ -440,7 +441,7 @@ protected:
 		strCMD += strPath;
 		strCMD += _T("22.mkv -y");
 
-		SendMessage(strCMD);
+		SendCmd(strCMD);
 	}
 	void BornSRTtoView()
 	{
@@ -452,7 +453,7 @@ protected:
 		strCMD += _T(" & ");
 		//构造命令
 		strCMD += _T("ffmpeg -i 22.mkv -vf subtitles=input.srt 33.mkv -y");
-		SendMessage(strCMD);
+		SendCmd(strCMD);
 	}
 	void GenerateGifWithView()
 	{
@@ -466,9 +467,9 @@ protected:
 		strCMD += strPath;
 		strCMD += _T("33.mkv -vf scale=iw/2:ih/2 -f gif ");
 		strCMD += strPath;
-		strCMD += _T("output.gif -y");
+		strCMD += _T("output!.gif -y");
 
-		SendMessage(strCMD);
+		SendCmd(strCMD);
 	}
 	CDuiString UTF8ToUniCode(const char* str)//UTF-8--->Unicode 
 	{
